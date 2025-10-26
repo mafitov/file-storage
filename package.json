@@ -1,0 +1,20 @@
+{
+    "name": "file-storage",
+    "version": "1.0.0",
+    "description": "File Storage",
+    "author": "Maksim Afitau",
+    "private": false,
+    "scripts": {
+        "deploy": "sls deploy",
+        "remove": "sls remove"
+    },
+    "dependencies": {
+        "@aws-lambda/http": "^1.0.1",
+        "@aws-sdk/util-dynamodb": "^3.868.0",
+        "aws-sdk": "^2.1692.0",
+        "lambda-multipart-parser": "^1.0.1"
+    },
+    "devDependencies": {
+        "serverless-bundle": "^6.3.1"
+    }
+}

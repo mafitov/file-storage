@@ -1,0 +1,85 @@
+service: file-storage
+frameworkVersion: '3'
+package:
+    individually: true
+plugins:
+    - serverless-bundle
+provider:
+    name: aws
+    runtime: nodejs20.x
+    stage: dev
+    region: eu-central-1
+    lambdaHashingVersion: 20201221
+    environment:
+        FILE_BUCKET: ${self:service}-${sls:stage}-files
+    iam:
+        role:
+            statements:
+                -   Effect: Allow
+                    Action:
+                        - s3:DeleteObject
+                        - s3:GetObject
+                        - s3:ListBucket
+                        - s3:PutObject
+                        - s3:GetBucketPolicy
+                        - s3:GetBucketLocation
+                        - s3:PutBucketPolicy
+                    Resource:
+                        -   Fn::Join: [ '/', [ Fn::GetAtt: [ FileBucket, Arn ], '*' ] ]
+functions:
+    -   file-create:
+            handler: src/functions/file-create.handler
+            events:
+                -   httpApi:
+                        path: /
+                        method: post
+    -   file-list:
+            handler: src/functions/file-list.handler
+            events:
+                -   httpApi:
+                        path: /
+                        method: get
+    -   file-delete:
+            handler: src/functions/file-delete.handler
+            events:
+                -   httpApi:
+                        path: /{fileName}
+                        method: delete
+resources:
+    -   Resources:
+            FileBucket:
+                Type: 'AWS::S3::Bucket'
+                DeletionPolicy: Delete
+                Properties:
+                    BucketName: ${self:provider.environment.FILE_BUCKET}
+                    PublicAccessBlockConfiguration:
+                        BlockPublicAcls: false
+                        BlockPublicPolicy: false
+                        IgnorePublicAcls: false
+                        RestrictPublicBuckets: false
+            FilePolicy:
+                Type: AWS::S3::BucketPolicy
+                Properties:
+                    Bucket:
+                        Ref: FileBucket
+                    PolicyDocument:
+                        Statement:
+                            -   Action:
+                                    - 's3:GetObject'
+                                Effect: Allow
+                                Principal: '*'
+                                Resource:
+                                    -   Fn::Join: [ '/', [ Fn::GetAtt: [ FileBucket, Arn ], '*' ] ]
+            BucketPolicy:
+                Type: AWS::S3::BucketPolicy
+                Properties:
+                    Bucket:
+                        Ref: FileBucket
+                    PolicyDocument:
+                        Statement:
+                            -   Action:
+                                    - 's3:ListBucket'
+                                Effect: Allow
+                                Principal: '*'
+                                Resource:
+                                    -   Fn::GetAtt: [ FileBucket, Arn ]
