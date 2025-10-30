@@ -1,16 +1,10 @@
-import s3 from '../utils/s3';
 import response from '../utils/response';
+import dynamodb from "../utils/dynamodb";
 
 exports.handler = async () => {
     try {
-        const result = await s3.listFiles();
-        return response.success(
-            result.Contents.map((file) => ({
-                file: file.Key,
-                lastModified: file.LastModified,
-                size: file.Size
-            }))
-        );
+        const result = await dynamodb.getFiles();
+        return response.success(result.Items);
     } catch (error) {
         return response.serverError(error);
     }

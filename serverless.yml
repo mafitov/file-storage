@@ -1,4 +1,4 @@
-service: file-storage
+service: file-storage-api
 frameworkVersion: '3'
 package:
     individually: true
@@ -11,10 +11,19 @@ provider:
     region: eu-central-1
     lambdaHashingVersion: 20201221
     environment:
+        FILE_TABLE: ${self:service}-${sls:stage}-files
         FILE_BUCKET: ${self:service}-${sls:stage}-files
     iam:
         role:
             statements:
+                -   Effect: Allow
+                    Action:
+                        - dynamodb:GetItem
+                        - dynamodb:PutItem
+                        - dynamodb:Scan
+                        - dynamodb:DeleteItem
+                    Resource:
+                    -   Fn::GetAtt: [ FileTable, Arn ]
                 -   Effect: Allow
                     Action:
                         - s3:DeleteObject
@@ -31,22 +40,34 @@ functions:
             handler: src/functions/file-create.handler
             events:
                 -   httpApi:
-                        path: /
+                        path: /files
                         method: post
     -   file-list:
             handler: src/functions/file-list.handler
             events:
                 -   httpApi:
-                        path: /
+                        path: /files
                         method: get
     -   file-delete:
             handler: src/functions/file-delete.handler
             events:
                 -   httpApi:
-                        path: /{fileName}
+                        path: /files/{id}
                         method: delete
 resources:
     -   Resources:
+            FileTable:
+                Type: 'AWS::DynamoDB::Table'
+                DeletionPolicy: Delete
+                Properties:
+                    AttributeDefinitions:
+                        -   AttributeName: id
+                            AttributeType: S
+                    KeySchema:
+                        -   AttributeName: id
+                            KeyType: HASH
+                    BillingMode: PAY_PER_REQUEST
+                    TableName: ${self:provider.environment.FILE_TABLE}
             FileBucket:
                 Type: 'AWS::S3::Bucket'
                 DeletionPolicy: Delete
@@ -57,19 +78,6 @@ resources:
                         BlockPublicPolicy: false
                         IgnorePublicAcls: false
                         RestrictPublicBuckets: false
-            FilePolicy:
-                Type: AWS::S3::BucketPolicy
-                Properties:
-                    Bucket:
-                        Ref: FileBucket
-                    PolicyDocument:
-                        Statement:
-                            -   Action:
-                                    - 's3:GetObject'
-                                Effect: Allow
-                                Principal: '*'
-                                Resource:
-                                    -   Fn::Join: [ '/', [ Fn::GetAtt: [ FileBucket, Arn ], '*' ] ]
             BucketPolicy:
                 Type: AWS::S3::BucketPolicy
                 Properties:
@@ -83,3 +91,16 @@ resources:
                                 Principal: '*'
                                 Resource:
                                     -   Fn::GetAtt: [ FileBucket, Arn ]
+            FilePolicy:
+                Type: AWS::S3::BucketPolicy
+                Properties:
+                    Bucket:
+                        Ref: FileBucket
+                    PolicyDocument:
+                        Statement:
+                            -   Action:
+                                    - 's3:GetObject'
+                                Effect: Allow
+                                Principal: '*'
+                                Resource:
+                                    -   Fn::Join: [ '/', [ Fn::GetAtt: [ FileBucket, Arn ], '*' ] ]

@@ -1,6 +1,7 @@
 import parser from 'lambda-multipart-parser';
 import s3 from '../utils/s3';
 import response from '../utils/response';
+import dynamodb from "../utils/dynamodb";
 
 exports.handler = async (event) => {
     try {
@@ -10,10 +11,10 @@ exports.handler = async (event) => {
             return response.validationError('File size exceeded 5Mb');
         }
 
-        const result = await s3.uploadFile(data);
-        return response.created({
-            location: result.Location
-        });
+        const file = await s3.uploadFile(data);
+        const resultItem = await dynamodb.createFile(file);
+
+        return response.created(resultItem.Item);
     } catch (error) {
         return response.serverError(error);
     }

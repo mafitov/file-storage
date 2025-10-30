@@ -1,5 +1,5 @@
 {
-    "name": "file-storage",
+    "name": "file-storage-api",
     "version": "1.0.0",
     "description": "File Storage",
     "author": "Maksim Afitau",
@@ -12,7 +12,8 @@
         "@aws-lambda/http": "^1.0.1",
         "@aws-sdk/util-dynamodb": "^3.868.0",
         "aws-sdk": "^2.1692.0",
-        "lambda-multipart-parser": "^1.0.1"
+        "lambda-multipart-parser": "^1.0.1",
+        "short-unique-id": "^5.3.2"
     },
     "devDependencies": {
         "serverless-bundle": "^6.3.1"
