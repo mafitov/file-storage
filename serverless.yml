@@ -13,6 +13,23 @@ provider:
     environment:
         FILE_TABLE: ${self:service}-${sls:stage}-files
         FILE_BUCKET: ${self:service}-${sls:stage}-files
+    httpApi:
+        cors:
+            allowedOrigins: '*'
+            allowedHeaders:
+                - Content-Type
+                - X-Amz-Date
+                - Authorization
+                - X-Api-Key
+                - X-Amz-Security-Token
+                - X-Amz-User-Agent
+            allowedMethods:
+                - OPTIONS
+                - GET
+                - POST
+                - PUT
+                - DELETE
+            allowCredentials: false
     iam:
         role:
             statements:
